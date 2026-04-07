@@ -67,12 +67,44 @@
 
     /* ─── CLOCK ──────────────────────────────── */
     .clock {
+      display: flex;
+      align-items: center;
       font-family: 'Fira Code', monospace;
       font-size: 13px;
       color: var(--muted);
       user-select: none;
       padding-top: 6px;
       letter-spacing: 0.02em;
+    }
+
+    .clock-bracket { line-height: 16px; margin: 0 4px; }
+    .clock-sep { line-height: 16px; margin: 0 1px; }
+    
+    .digit-group { display: flex; }
+    
+    .digit-slot {
+      width: 8px;
+      height: 16px;
+      overflow: hidden;
+      position: relative;
+    }
+    
+    .digit-track {
+      display: flex;
+      flex-direction: column;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .digit-cell {
+      height: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
     }
 
     /* ─── MAIN CONTENT ───────────────────────── */
@@ -248,6 +280,27 @@
       background: #fff5f9;
     }
 
+    /* ─── BOTTOM ACTIONS ─────────────────────── */
+    .bottom-actions {
+      display: flex;
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .action-btn {
+      font-family: 'Fira Code', monospace;
+      font-size: 12px;
+      color: var(--muted);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      transition: color 0.15s;
+      padding: 0;
+    }
+
+    .action-btn:hover { color: var(--text); }
+    .action-btn.danger:hover { color: var(--red); }
+
     /* ─── EMPTY STATE ────────────────────────── */
     .empty-state {
       text-align: center;
@@ -380,7 +433,15 @@
   <!-- HEADER -->
   <div class="header-bar">
     <div class="brand">// blossom.todo</div>
-    <div class="clock" id="clock">[ 00:00:00 ]</div>
+    <div class="clock" id="clock">
+      <span class="clock-bracket">[</span>
+      <div class="digit-group" id="dg-h"></div>
+      <span class="clock-sep">:</span>
+      <div class="digit-group" id="dg-m"></div>
+      <span class="clock-sep">:</span>
+      <div class="digit-group" id="dg-s"></div>
+      <span class="clock-bracket">]</span>
+    </div>
   </div>
 
   <div class="app-layout">
@@ -398,6 +459,11 @@
         <span><span class="stats-dot" style="background:var(--pink)"></span> <span id="statDone">0 done</span></span>
         <span><span class="stats-dot" style="background:var(--red)"></span> <span id="statFailed">0 failed</span></span>
         <button class="tree-toggle-btn" id="treeToggleBtn">[ View Tree ]</button>
+      </div>
+
+      <div class="bottom-actions">
+        <button class="action-btn" id="clearTasksBtn">[ clear tasks ]</button>
+        <button class="action-btn danger" id="resetTreeBtn">[ start fresh ]</button>
       </div>
     </main>
 
@@ -417,12 +483,70 @@
 
 <script>
 /* ═══════════════════════════════════════════════════
-   1. MINIMAL CLOCK
+   1. LOTTERY CLOCK
 ═══════════════════════════════════════════════════ */
+function makeDG(parentId, count) {
+  const p = document.getElementById(parentId);
+  for (let i = 0; i < count; i++) {
+    const slot = document.createElement('div');
+    slot.className = 'digit-slot';
+    const track = document.createElement('div');
+    track.className = 'digit-track';
+    for (let j = 0; j < 3; j++) {
+      const cell = document.createElement('div');
+      cell.className = 'digit-cell';
+      cell.textContent = '0';
+      track.appendChild(cell);
+    }
+    slot.appendChild(track);
+    p.appendChild(slot);
+  }
+}
+
+makeDG('dg-h', 2);
+makeDG('dg-m', 2);
+makeDG('dg-s', 2);
+
+function setDigit(groupId, digitIndex, val) {
+  const group = document.getElementById(groupId);
+  const slot = group.children[digitIndex];
+  const track = slot.children[0];
+  const cells = track.children;
+  const prev = parseInt(cells[1].textContent) || 0;
+  if (prev === val) return;
+  const next = val;
+  
+  cells[0].textContent = prev;
+  cells[1].textContent = prev;
+  cells[2].textContent = next;
+  
+  track.style.transition = 'none';
+  track.style.transform = 'translateY(0)';
+  
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      track.style.transition = 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)';
+      track.style.transform = 'translateY(-16px)';
+      setTimeout(() => {
+        track.style.transition = 'none';
+        cells[0].textContent = next;
+        cells[1].textContent = next;
+        cells[2].textContent = next;
+        track.style.transform = 'translateY(0)';
+      }, 370);
+    });
+  });
+}
+
 function updateClock() {
   const now = new Date();
   const pad = n => String(n).padStart(2, '0');
-  document.getElementById('clock').textContent = `[ ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())} ]`;
+  const timeStr = [pad(now.getHours()), pad(now.getMinutes()), pad(now.getSeconds())];
+  
+  ['dg-h', 'dg-m', 'dg-s'].forEach((id, idx) => {
+    setDigit(id, 0, parseInt(timeStr[idx][0]));
+    setDigit(id, 1, parseInt(timeStr[idx][1]));
+  });
 }
 setInterval(updateClock, 1000);
 updateClock();
@@ -945,8 +1069,43 @@ document.getElementById('treeContainer').addEventListener('click', e => {
 });
 
 /* ═══════════════════════════════════════════════════
-   7. INIT
+   7. INIT & ACTIONS
 ═══════════════════════════════════════════════════ */
+let clearTasksTimeout;
+document.getElementById('clearTasksBtn').addEventListener('click', (e) => {
+  const btn = e.target;
+  if (btn.textContent === '[ clear tasks ]') {
+    btn.textContent = '[ sure? ]';
+    clearTasksTimeout = setTimeout(() => { btn.textContent = '[ clear tasks ]'; }, 3000);
+    return;
+  }
+  clearTimeout(clearTasksTimeout);
+  btn.textContent = '[ clear tasks ]';
+
+  tasks = [];
+  saveTasks();
+  renderTasks();
+});
+
+let resetTreeTimeout;
+document.getElementById('resetTreeBtn').addEventListener('click', (e) => {
+  const btn = e.target;
+  if (btn.textContent === '[ start fresh ]') {
+    btn.textContent = '[ sure? ]';
+    resetTreeTimeout = setTimeout(() => { btn.textContent = '[ start fresh ]'; }, 3000);
+    return;
+  }
+  clearTimeout(resetTreeTimeout);
+  btn.textContent = '[ start fresh ]';
+
+  // Perform a full reset: clear tasks and revert tree to sapling without fallen leaves
+  tasks = [];
+  saveTasks();
+  saveTreeState(defaultTreeState());
+  renderTasks();
+  renderTree(); // Instantly re-draw the fresh canvas
+});
+
 renderTasks();
 
 if (!localStorage.getItem('blossom_tree')) {
