@@ -302,6 +302,7 @@
     .stats-bar {
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 16px;
       margin-top: 36px;
       padding-top: 20px;
@@ -314,8 +315,13 @@
     .stats-bar span { display: flex; align-items: center; gap: 5px; }
     .stats-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
 
+    .tree-toggle-wrap {
+      display: flex;
+      justify-content: center;
+      margin-top: 16px;
+    }
+
     .tree-toggle-btn {
-      margin-left: auto;
       font-family: 'Fira Code', monospace;
       font-size: 12px;
       color: var(--muted);
@@ -337,6 +343,7 @@
     /* ─── BOTTOM ACTIONS ─────────────────────── */
     .bottom-actions {
       display: flex;
+      justify-content: center;
       gap: 16px;
       margin-top: 16px;
     }
@@ -393,6 +400,7 @@
       margin-bottom: 20px;
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 20px;
     }
 
@@ -413,8 +421,10 @@
     .tree-canvas-wrap {
       position: relative;
       display: flex;
-      justify-content: center;
+      flex-direction: column;
+      align-items: center;
       width: 100%;
+      gap: 16px;
     }
 
     #treeCanvas {
@@ -430,14 +440,11 @@
     }
 
     .tree-level-badge {
-      position: absolute;
-      bottom: -32px;
-      left: 50%;
-      transform: translateX(-50%);
       font-family: 'Fira Code', monospace;
       font-size: 12px;
       color: var(--muted);
       white-space: nowrap;
+      text-align: center;
     }
 
     /* ─── DESKTOP LAYOUT OVERRIDES ───────────── */
@@ -452,8 +459,8 @@
         flex-shrink: 0;
         width: 440px;
       }
-      .tree-overlay-header .tree-close-btn { display: none; }
-      #treeToggleBtn { display: none; }
+      .tree-close-btn { display: none; }
+      .tree-toggle-wrap { display: none; }
     }
 
     /* ─── FALLING LEAF ANIMATION ─────────────── */
@@ -515,12 +522,15 @@
         <span><span class="stats-dot" style="background:var(--muted)"></span> <span id="statPending">0 pending</span></span>
         <span><span class="stats-dot" style="background:var(--pink)"></span> <span id="statDone">0 done</span></span>
         <span><span class="stats-dot" style="background:var(--red)"></span> <span id="statFailed">0 failed</span></span>
-        <button class="tree-toggle-btn" id="treeToggleBtn">[ View Tree ]</button>
       </div>
 
       <div class="bottom-actions">
         <button class="action-btn" id="clearTasksBtn">[ clear tasks ]</button>
         <button class="action-btn danger" id="resetTreeBtn">[ start fresh ]</button>
+      </div>
+
+      <div class="tree-toggle-wrap">
+        <button class="tree-toggle-btn" id="treeToggleBtn">[ View Tree ]</button>
       </div>
     </main>
 
@@ -528,11 +538,11 @@
     <aside class="tree-container" id="treeContainer">
       <div class="tree-overlay-header">
         <span id="treeStatusLabel">🌸 cherry blossom</span>
-        <button class="tree-close-btn" id="treeCloseBtn">[ Close ]</button>
       </div>
       <div class="tree-canvas-wrap">
-        <canvas id="treeCanvas" width="560" height="520"></canvas>
+        <canvas id="treeCanvas" width="560" height="640"></canvas>
         <div class="tree-level-badge" id="treeLevelBadge"></div>
+        <button class="tree-close-btn" id="treeCloseBtn">[ Close ]</button>
       </div>
     </aside>
   </div>
